@@ -1,0 +1,9 @@
+syntax = "proto3";
+option go_package = ".;service";
+message Message{
+    string body = 1;
+}
+
+service TimeMemorizer{
+    rpc simpleResponse(Message) returns (Message) {}
+}
