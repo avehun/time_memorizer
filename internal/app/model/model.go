@@ -9,25 +9,19 @@ type Category struct {
 
 type CategoryStorage map[string]int
 
-func (cs CategoryStorage) Add(category string, time int) {
-	_, ok := cs[category]
-	if !ok {
-		cs[category] += time
-
-	} else {
-		cs[category] = time
-	}
+func (cs CategoryStorage) Add(category string, timeToAdd int) {
+	cs[category] = cs[category] + timeToAdd
 }
 
-func (cs CategoryStorage) Subtract(categoty string, time int) error {
+func (cs CategoryStorage) Subtract(categoty string, timeToSubstrct int) error {
 
 	val, ok := cs[categoty]
 	if !ok {
 		return errors.New("no category in storage")
 	}
-	if time > val {
+	if timeToSubstrct > val {
 		return errors.New("trying to subtract more time than stored")
 	}
-	cs[categoty] -= time
+	cs[categoty] -= timeToSubstrct
 	return nil
 }
