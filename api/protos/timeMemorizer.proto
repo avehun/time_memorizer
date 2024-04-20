@@ -5,5 +5,5 @@ message Message{
 }
 
 service TimeMemorizer{
-    rpc simpleResponse(Message) returns (Message) {}
+    rpc SimpleResponse(Message) returns (Message) {}
 }

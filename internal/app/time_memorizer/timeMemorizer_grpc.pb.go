@@ -31,7 +31,7 @@ func NewTimeMemorizerClient(cc grpc.ClientConnInterface) TimeMemorizerClient {
 
 func (c *timeMemorizerClient) SimpleResponse(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
 	out := new(Message)
-	err := c.cc.Invoke(ctx, "/TimeMemorizer/simpleResponse", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/TimeMemorizer/SimpleResponse", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func _TimeMemorizer_SimpleResponse_Handler(srv interface{}, ctx context.Context,
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/TimeMemorizer/simpleResponse",
+		FullMethod: "/TimeMemorizer/SimpleResponse",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(TimeMemorizerServer).SimpleResponse(ctx, req.(*Message))
@@ -92,7 +92,7 @@ var TimeMemorizer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*TimeMemorizerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "simpleResponse",
+			MethodName: "SimpleResponse",
 			Handler:    _TimeMemorizer_SimpleResponse_Handler,
 		},
 	},
