@@ -1,9 +1,14 @@
 syntax = "proto3";
 option go_package = ".;service";
+message CategoryAndTime{
+    string category = 1;
+    int32 timeSpent = 2;
+}
 message Message{
     string body = 1;
 }
 
 service TimeMemorizer{
-    rpc SimpleResponse(Message) returns (Message) {}
+    rpc AddTime(CategoryAndTime) returns (Message) {}
+    rpc SubstractTime(CategoryAndTime) returns (Message){}
 }

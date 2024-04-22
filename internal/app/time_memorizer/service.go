@@ -5,27 +5,48 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/radiance822/time_memorizer/internal/app/model"
 	grpc "google.golang.org/grpc"
 )
 
 type Server struct {
+	UnimplementedTimeMemorizerServer
+	Storage model.CategoryStorage
 }
 
-func (s Server) mustEmbedUnimplementedTimeMemorizerServer() {
-	panic("unimplemented")
+func (s Server) AddTime(ctx context.Context, in *CategoryAndTime) (*Message, error) {
+	s.Storage.Add(in.Category, int(in.TimeSpent))
+	return &Message{
+		Body: "Time added",
+	}, nil
 }
 
-func (s Server) SimpleResponse(ctx context.Context, message *Message) (*Message, error) {
-	return &Message{Body: "SimpleResponse handler"}, nil
+func (s Server) SubstractTime(ctx context.Context, in *CategoryAndTime) (*Message, error) {
+	s.Storage.Subtract(in.Category, int(in.TimeSpent))
+	return &Message{
+		Body: "Time substracted",
+	}, nil
 }
-
 func InitHttpHandler() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/SimpleResponse", SimpleResponseHandler)
+	mux.HandleFunc("/AddTime", AddCategoryTime)
 	return mux
 }
 
-func SimpleResponseHandler(w http.ResponseWriter, r *http.Request) {
+func AddCategoryTime(w http.ResponseWriter, r *http.Request) {
+	type Request struct {
+		Category string `json:"category"`
+		Time     int    `json:"time"`
+	}
+	request := Request{}
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "Wrong request", http.StatusBadRequest)
+	}
+	converted := CategoryAndTime{
+		Category:  request.Category,
+		TimeSpent: int32(request.Time),
+	}
 	conn, err := grpc.Dial("localhost:9090", grpc.WithInsecure())
 	if err != nil {
 		http.Error(w, "Failed to dial gRPC server", http.StatusInternalServerError)
@@ -35,11 +56,7 @@ func SimpleResponseHandler(w http.ResponseWriter, r *http.Request) {
 
 	client := NewTimeMemorizerClient(conn)
 
-	message := &Message{
-		Body: "Your message here",
-	}
-
-	response, err := client.SimpleResponse(r.Context(), message)
+	response, err := client.AddTime(r.Context(), &converted)
 	if err != nil {
 		http.Error(w, "Failed to call gRPC method", http.StatusInternalServerError)
 		return

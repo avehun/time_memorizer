@@ -18,7 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TimeMemorizerClient interface {
-	SimpleResponse(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
+	AddTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error)
+	SubstractTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error)
 }
 
 type timeMemorizerClient struct {
@@ -29,9 +30,18 @@ func NewTimeMemorizerClient(cc grpc.ClientConnInterface) TimeMemorizerClient {
 	return &timeMemorizerClient{cc}
 }
 
-func (c *timeMemorizerClient) SimpleResponse(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
+func (c *timeMemorizerClient) AddTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error) {
 	out := new(Message)
-	err := c.cc.Invoke(ctx, "/TimeMemorizer/SimpleResponse", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/TimeMemorizer/AddTime", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *timeMemorizerClient) SubstractTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error) {
+	out := new(Message)
+	err := c.cc.Invoke(ctx, "/TimeMemorizer/SubstractTime", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +52,8 @@ func (c *timeMemorizerClient) SimpleResponse(ctx context.Context, in *Message, o
 // All implementations must embed UnimplementedTimeMemorizerServer
 // for forward compatibility
 type TimeMemorizerServer interface {
-	SimpleResponse(context.Context, *Message) (*Message, error)
+	AddTime(context.Context, *CategoryAndTime) (*Message, error)
+	SubstractTime(context.Context, *CategoryAndTime) (*Message, error)
 	mustEmbedUnimplementedTimeMemorizerServer()
 }
 
@@ -50,8 +61,11 @@ type TimeMemorizerServer interface {
 type UnimplementedTimeMemorizerServer struct {
 }
 
-func (UnimplementedTimeMemorizerServer) SimpleResponse(context.Context, *Message) (*Message, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SimpleResponse not implemented")
+func (UnimplementedTimeMemorizerServer) AddTime(context.Context, *CategoryAndTime) (*Message, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddTime not implemented")
+}
+func (UnimplementedTimeMemorizerServer) SubstractTime(context.Context, *CategoryAndTime) (*Message, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SubstractTime not implemented")
 }
 func (UnimplementedTimeMemorizerServer) mustEmbedUnimplementedTimeMemorizerServer() {}
 
@@ -66,20 +80,38 @@ func RegisterTimeMemorizerServer(s grpc.ServiceRegistrar, srv TimeMemorizerServe
 	s.RegisterService(&TimeMemorizer_ServiceDesc, srv)
 }
 
-func _TimeMemorizer_SimpleResponse_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Message)
+func _TimeMemorizer_AddTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CategoryAndTime)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TimeMemorizerServer).SimpleResponse(ctx, in)
+		return srv.(TimeMemorizerServer).AddTime(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/TimeMemorizer/SimpleResponse",
+		FullMethod: "/TimeMemorizer/AddTime",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TimeMemorizerServer).SimpleResponse(ctx, req.(*Message))
+		return srv.(TimeMemorizerServer).AddTime(ctx, req.(*CategoryAndTime))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TimeMemorizer_SubstractTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CategoryAndTime)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TimeMemorizerServer).SubstractTime(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/TimeMemorizer/SubstractTime",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TimeMemorizerServer).SubstractTime(ctx, req.(*CategoryAndTime))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -92,8 +124,12 @@ var TimeMemorizer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*TimeMemorizerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SimpleResponse",
-			Handler:    _TimeMemorizer_SimpleResponse_Handler,
+			MethodName: "AddTime",
+			Handler:    _TimeMemorizer_AddTime_Handler,
+		},
+		{
+			MethodName: "SubstractTime",
+			Handler:    _TimeMemorizer_SubstractTime_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

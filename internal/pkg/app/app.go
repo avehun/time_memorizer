@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/radiance822/time_memorizer/internal/app/model"
 	service "github.com/radiance822/time_memorizer/internal/app/time_memorizer"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
@@ -38,7 +39,7 @@ func (app App) Run() {
 
 func serveGrpc(listener net.Listener) {
 	grpcServer := grpc.NewServer()
-	timeMemServ := service.Server{}
+	timeMemServ := service.Server{Storage: model.CategoryStorage{}}
 	service.RegisterTimeMemorizerServer(grpcServer, timeMemServ)
 	reflection.Register(grpcServer)
 	err := grpcServer.Serve(listener)
