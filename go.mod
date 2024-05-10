@@ -3,7 +3,6 @@ module github.com/radiance822/time_memorizer
 go 1.22.2
 
 require (
-	github.com/soheilhy/cmux v0.1.5
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
 )
