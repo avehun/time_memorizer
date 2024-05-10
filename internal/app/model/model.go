@@ -13,15 +13,19 @@ func (cs CategoryStorage) Add(category string, timeToAdd int) {
 	cs[category] = cs[category] + timeToAdd
 }
 
-func (cs CategoryStorage) Subtract(categoty string, timeToSubstrct int) error {
+func (cs CategoryStorage) Subtract(category string, timeToSubstrct int) error {
 
-	val, ok := cs[categoty]
+	val, ok := cs[category]
 	if !ok {
 		return errors.New("no category in storage")
 	}
 	if timeToSubstrct > val {
 		return errors.New("trying to subtract more time than stored")
 	}
-	cs[categoty] -= timeToSubstrct
+	cs[category] -= timeToSubstrct
 	return nil
+}
+
+func (cs CategoryStorage) Load(category string) int {
+	return cs[category]
 }

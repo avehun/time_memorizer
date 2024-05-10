@@ -11,4 +11,5 @@ message Message{
 service TimeMemorizer{
     rpc AddTime(CategoryAndTime) returns (Message) {}
     rpc SubstractTime(CategoryAndTime) returns (Message){}
+    rpc ShowTime(Message) returns (Message){}
 }
