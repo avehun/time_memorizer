@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: timeMemorizer.proto
 
-package service
+package api
 
 import (
 	context "context"
@@ -28,9 +28,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TimeMemorizerClient interface {
-	AddTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error)
-	SubstractTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error)
-	ShowTime(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error)
+	AddTime(ctx context.Context, in *AddTimeRequest, opts ...grpc.CallOption) (*AddTimeResponse, error)
+	SubstractTime(ctx context.Context, in *SubtractTimeRequest, opts ...grpc.CallOption) (*SubtractTimeResponse, error)
+	ShowTime(ctx context.Context, in *ShowTimeRequest, opts ...grpc.CallOption) (*ShowTimeResponse, error)
 }
 
 type timeMemorizerClient struct {
@@ -41,8 +41,8 @@ func NewTimeMemorizerClient(cc grpc.ClientConnInterface) TimeMemorizerClient {
 	return &timeMemorizerClient{cc}
 }
 
-func (c *timeMemorizerClient) AddTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error) {
-	out := new(Message)
+func (c *timeMemorizerClient) AddTime(ctx context.Context, in *AddTimeRequest, opts ...grpc.CallOption) (*AddTimeResponse, error) {
+	out := new(AddTimeResponse)
 	err := c.cc.Invoke(ctx, TimeMemorizer_AddTime_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -50,8 +50,8 @@ func (c *timeMemorizerClient) AddTime(ctx context.Context, in *CategoryAndTime, 
 	return out, nil
 }
 
-func (c *timeMemorizerClient) SubstractTime(ctx context.Context, in *CategoryAndTime, opts ...grpc.CallOption) (*Message, error) {
-	out := new(Message)
+func (c *timeMemorizerClient) SubstractTime(ctx context.Context, in *SubtractTimeRequest, opts ...grpc.CallOption) (*SubtractTimeResponse, error) {
+	out := new(SubtractTimeResponse)
 	err := c.cc.Invoke(ctx, TimeMemorizer_SubstractTime_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -59,8 +59,8 @@ func (c *timeMemorizerClient) SubstractTime(ctx context.Context, in *CategoryAnd
 	return out, nil
 }
 
-func (c *timeMemorizerClient) ShowTime(ctx context.Context, in *Message, opts ...grpc.CallOption) (*Message, error) {
-	out := new(Message)
+func (c *timeMemorizerClient) ShowTime(ctx context.Context, in *ShowTimeRequest, opts ...grpc.CallOption) (*ShowTimeResponse, error) {
+	out := new(ShowTimeResponse)
 	err := c.cc.Invoke(ctx, TimeMemorizer_ShowTime_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -72,9 +72,9 @@ func (c *timeMemorizerClient) ShowTime(ctx context.Context, in *Message, opts ..
 // All implementations must embed UnimplementedTimeMemorizerServer
 // for forward compatibility
 type TimeMemorizerServer interface {
-	AddTime(context.Context, *CategoryAndTime) (*Message, error)
-	SubstractTime(context.Context, *CategoryAndTime) (*Message, error)
-	ShowTime(context.Context, *Message) (*Message, error)
+	AddTime(context.Context, *AddTimeRequest) (*AddTimeResponse, error)
+	SubstractTime(context.Context, *SubtractTimeRequest) (*SubtractTimeResponse, error)
+	ShowTime(context.Context, *ShowTimeRequest) (*ShowTimeResponse, error)
 	mustEmbedUnimplementedTimeMemorizerServer()
 }
 
@@ -82,13 +82,13 @@ type TimeMemorizerServer interface {
 type UnimplementedTimeMemorizerServer struct {
 }
 
-func (UnimplementedTimeMemorizerServer) AddTime(context.Context, *CategoryAndTime) (*Message, error) {
+func (UnimplementedTimeMemorizerServer) AddTime(context.Context, *AddTimeRequest) (*AddTimeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddTime not implemented")
 }
-func (UnimplementedTimeMemorizerServer) SubstractTime(context.Context, *CategoryAndTime) (*Message, error) {
+func (UnimplementedTimeMemorizerServer) SubstractTime(context.Context, *SubtractTimeRequest) (*SubtractTimeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SubstractTime not implemented")
 }
-func (UnimplementedTimeMemorizerServer) ShowTime(context.Context, *Message) (*Message, error) {
+func (UnimplementedTimeMemorizerServer) ShowTime(context.Context, *ShowTimeRequest) (*ShowTimeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ShowTime not implemented")
 }
 func (UnimplementedTimeMemorizerServer) mustEmbedUnimplementedTimeMemorizerServer() {}
@@ -105,7 +105,7 @@ func RegisterTimeMemorizerServer(s grpc.ServiceRegistrar, srv TimeMemorizerServe
 }
 
 func _TimeMemorizer_AddTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CategoryAndTime)
+	in := new(AddTimeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -117,13 +117,13 @@ func _TimeMemorizer_AddTime_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: TimeMemorizer_AddTime_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TimeMemorizerServer).AddTime(ctx, req.(*CategoryAndTime))
+		return srv.(TimeMemorizerServer).AddTime(ctx, req.(*AddTimeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _TimeMemorizer_SubstractTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CategoryAndTime)
+	in := new(SubtractTimeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -135,13 +135,13 @@ func _TimeMemorizer_SubstractTime_Handler(srv interface{}, ctx context.Context, 
 		FullMethod: TimeMemorizer_SubstractTime_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TimeMemorizerServer).SubstractTime(ctx, req.(*CategoryAndTime))
+		return srv.(TimeMemorizerServer).SubstractTime(ctx, req.(*SubtractTimeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _TimeMemorizer_ShowTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Message)
+	in := new(ShowTimeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func _TimeMemorizer_ShowTime_Handler(srv interface{}, ctx context.Context, dec f
 		FullMethod: TimeMemorizer_ShowTime_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TimeMemorizerServer).ShowTime(ctx, req.(*Message))
+		return srv.(TimeMemorizerServer).ShowTime(ctx, req.(*ShowTimeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -1,6 +1,44 @@
 version: "3.8"
 services:
-  time_memorizer:
+  app:
+    image: api
     build: ./
     ports:
-      - "9090:9090"
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    depends_on:
+      - pgsql
+
+  pgsql:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: main
+      POSTGRES_PASSWORD: main
+      POSTGRES_DB: main
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  goose:
+    image: appropriate/curl
+    depends_on:
+      - pgsql
+    volumes:
+      - ./migrations:/migrations
+    command: >
+      /bin/sh -c "
+        echo Waiting for Postgres to start... &&
+        while ! curl http://pgsql:5432/ 2>&1 | grep '52' > /dev/null; do
+          sleep 1;
+        done &&
+        echo Postgres started &&
+        goose postgres 'host=pgsql user=postgres password=postgres dbname=postgres sslmode=disable' up
+      "
+
+volumes:
+  pg_data:
