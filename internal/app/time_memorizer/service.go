@@ -1,63 +1,113 @@
 package service
 
 import (
-	"log"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
+	"context"
 
-	"github.com/radiance822/time_memorizer/internal/app/model"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"github.com/jmoiron/sqlx"
+	"github.com/radiance822/time_memorizer/internal/app/provider"
+	pb "github.com/radiance822/time_memorizer/pkg/api"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-var (
-	StartGrpcServer = startGrpcServer
-	StartHttpServer = startHttpServer
-)
-
-func StartServers(grpcString, httpString string, storage *model.CategoryStorage) {
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		log.Println("Starting gRPC server")
-		startGrpcServer(grpcString, storage)
-		log.Println("gRPC server gracefully shut down")
-	}()
-	go startHttpServer(httpString, storage)
-	wg.Wait()
+type Implementation struct {
+	pb.UnimplementedTimeMemorizerServer
+	categoryProvider *provider.CategoryProvider
+	timeProvider     *provider.TimeProvider
+	userProvider     *provider.UserProvider
 }
-func startGrpcServer(adress string, storage *model.CategoryStorage) {
-	list, err := net.Listen("tcp", adress)
-	if err != nil {
-		return
+
+func NewImplementation(db *sqlx.DB) *Implementation {
+	return &Implementation{
+		categoryProvider: provider.NewCategoryProvider(db),
+		timeProvider:     provider.NewTimeProvider(db),
+		userProvider:     provider.NewUserProvider(db),
 	}
-	server := grpc.NewServer()
-	RegisterTimeMemorizerServer(server, &timeMemorizerServer{Storage: storage})
-	reflection.Register(server)
-
-	go func() {
-		interrupt := make(chan os.Signal, 1)
-		signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-		<-interrupt
-		server.GracefulStop()
-	}()
-
-	server.Serve(list)
 }
-func startHttpServer(adress string, storage *model.CategoryStorage) {
-	list, err := net.Listen("tcp", adress)
+
+func (imp *Implementation) AddTime(ctx context.Context, req *pb.AddTimeRequest) (*pb.AddTimeResponse, error) {
+	// Получаем userID по имени пользователя
+	userID, err := imp.userProvider.GetByUsername(ctx, req.Username)
 	if err != nil {
-		return
+		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
 	}
-	mux := InitHttpHandler(storage)
-	err = http.Serve(list, mux)
+
+	// Получаем или создаем категорию
+	category, err := imp.categoryProvider.GetByName(ctx, req.Title)
 	if err != nil {
-		log.Fatal("error serving http")
+		return nil, status.Errorf(codes.Internal, "Failed to get category: %v", err)
 	}
+	if category == nil {
+		// Категория не существует, создаем новую
+		categoryID, err := imp.categoryProvider.Store(ctx, req.Title)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to store category: %v", err)
+		}
+		category = &provider.Category{ID: categoryID, Name: req.Title}
+	}
+
+	// Добавляем время
+	err = imp.timeProvider.Add(ctx, req.Amount, category.ID, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to add time: %v", err)
+	}
+
+	return &pb.AddTimeResponse{Category: &pb.Category{Id: category.ID, Title: category.Name, Amount: req.Amount}}, nil
+}
+
+func (imp *Implementation) SubtractTime(ctx context.Context, req *pb.SubtractTimeRequest) (*pb.SubtractTimeResponse, error) {
+	userID, err := imp.userProvider.GetByUsername(ctx, req.Username)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
+	}
+
+	category, err := imp.categoryProvider.GetByName(ctx, req.Title)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get category: %v", err)
+	}
+	if category == nil {
+		return nil, status.Errorf(codes.NotFound, "Category not found")
+	}
+
+	existingTime, err := imp.timeProvider.GetByCategoryAndUser(ctx, category.ID, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get time: %v", err)
+	}
+	if existingTime == nil {
+		return nil, status.Errorf(codes.NotFound, "Time record not found")
+	}
+
+	if existingTime.Amount < req.Amount {
+		return nil, status.Errorf(codes.InvalidArgument, "Insufficient time to subtract")
+	}
+
+	err = imp.timeProvider.Subtract(ctx, req.Amount, category.ID, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to subtract time: %v", err)
+	}
+
+	return &pb.SubtractTimeResponse{Category: &pb.Category{Id: category.ID, Title: category.Name, Amount: req.Amount}}, nil
+}
+
+func (imp *Implementation) ShowTime(ctx context.Context, req *pb.ShowTimeRequest) (*pb.ShowTimeResponse, error) {
+	userID, err := imp.userProvider.GetByUsername(ctx, req.Username)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get user: %v", err)
+	}
+
+	categories, err := imp.timeProvider.GetByUserId(ctx, userID)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to get time: %v", err)
+	}
+
+	var pbCategories []*pb.Category
+	for _, category := range categories {
+		amount, err := imp.timeProvider.GetByCategoryAndUser(ctx, category.ID, userID)
+		if err != nil {
+			return nil, err
+		}
+		pbCategories = append(pbCategories, &pb.Category{Id: category.ID, Title: category.Name, Amount: amount.Amount})
+	}
+
+	return &pb.ShowTimeResponse{Categories: pbCategories}, nil
 }

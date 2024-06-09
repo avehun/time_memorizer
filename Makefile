@@ -15,7 +15,7 @@ lint:
 	golangci-lint run ./...
 
 protos:
-	protoc -I api/protos/ --go_out=internal/app/time_memorizer/ --go-grpc_out=internal/app/time_memorizer/ api/protos/timeMemorizer.proto
+	protoc -I api/protos/ --go_out=pkg/api/ --go-grpc_out=pkg/api api/protos/timeMemorizer.proto
 
 local_up:
 	docker-compose up --build

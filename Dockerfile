@@ -9,5 +9,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o main .
 FROM alpine:latest  
 WORKDIR /root/
 COPY --from=builder /app/cmd/time_memorizer/main .
-EXPOSE 9090
+EXPOSE 8080
+EXPOSE 8081
 CMD ["./main"]

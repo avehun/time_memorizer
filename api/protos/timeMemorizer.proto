@@ -1,15 +1,37 @@
 syntax = "proto3";
-option go_package = ".;service";
-message CategoryAndTime{
-    string category = 1;
-    int32 timeSpent = 2;
-}
-message Message{
-    string body = 1;
-}
+option go_package = ".;api";
 
 service TimeMemorizer{
-    rpc AddTime(CategoryAndTime) returns (Message) {}
-    rpc SubstractTime(CategoryAndTime) returns (Message){}
-    rpc ShowTime(Message) returns (Message){}
+    rpc AddTime(AddTimeRequest) returns (AddTimeResponse) {}
+    rpc SubstractTime(SubtractTimeRequest) returns (SubtractTimeResponse){}
+    rpc ShowTime(ShowTimeRequest) returns (ShowTimeResponse){}
+}
+
+message Category{
+    uint64 id = 1;
+    string title = 2;
+    uint64 amount = 3;
+    string username =4;
+}
+message AddTimeRequest{
+    string username = 1; 
+    string title = 2;
+    uint64 amount = 3;
+}
+message AddTimeResponse{
+    Category category = 1;
+}
+message SubtractTimeRequest{
+    string username = 1;
+    string title = 2;
+    uint64 amount = 3;
+}
+message SubtractTimeResponse{
+    Category category = 1;
+}
+message ShowTimeRequest{
+    string username = 1; 
+}
+message ShowTimeResponse{
+    repeated Category categories = 1;
 }
